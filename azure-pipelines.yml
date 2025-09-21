@@ -1,40 +1,14 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# Azure DevOps pipeline for Bouncer application
+# Builds and deploys .NET Core API and SvelteKit frontend to Azure App Service
 
-# .NET Core pipeline to build, test, and deploy to Azure App Service
 trigger:
-- dev  # Change this to the branch you want to trigger the pipeline on
-
-# pool:
-#   vmImage: 'ubuntu-latest'  # Use hosted Ubuntu agent
-
-# variables:
-#   buildConfiguration: 'Release'
-
-# steps:
-# - task: DotNetCoreCLI@2
-#   inputs:
-#     command: 'publish'
-#     publishWebProjects: false
-#     projects: '**/*.csproj'
-#     modifyOutputPath: false
-#     zipAfterPublish: true
-
-# - task: AzureRmWebAppDeployment@4
-#   inputs:
-#     ConnectionType: 'AzureRM'
-#     azureSubscription: 'StringEncryptorServiceConnection'
-#     appType: 'webAppLinux'
-#     WebAppName: 'StringEncryptor'
-#     packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
-
-# trigger:
-# - master
+- dev
 
 pool:
   vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: 'Release'
 
 steps:
 
@@ -76,6 +50,6 @@ steps:
     azureSubscription: 'PayAsYouGoSub1(9298f3c5-6a8b-47e2-90bc-21c26ceee690)'
     appType: 'webAppLinux'
     WebAppName: 'bouncer'
-    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
     RuntimeStack: 'DOTNETCORE|9.0'
     DeploymentTypeLinux: 'oneDeploy'

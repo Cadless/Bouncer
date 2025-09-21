@@ -5,7 +5,7 @@
 
 # .NET Core pipeline to build, test, and deploy to Azure App Service
 trigger:
-- main  # Change this to the branch you want to trigger the pipeline on
+- dev  # Change this to the branch you want to trigger the pipeline on
 
 # pool:
 #   vmImage: 'ubuntu-latest'  # Use hosted Ubuntu agent

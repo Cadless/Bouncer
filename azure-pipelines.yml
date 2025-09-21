@@ -79,8 +79,8 @@ jobs:
 
   # Build the SvelteKit app (generates output in .svelte/)
   - script: |
-      export API_BASE_URL=$(API_URL)
-      echo "API URL: $(API_BASE_URL)"
+      export API_BASE_URL=$(API_BASE_URL)
+      echo "API_BASE_URL: $(API_BASE_URL)"
       npm run build
     displayName: 'Build the SvelteKit app'
     env:

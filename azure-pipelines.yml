@@ -1,0 +1,63 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+# .NET Core pipeline to build, test, and deploy to Azure App Service
+trigger:
+- main  # Change this to the branch you want to trigger the pipeline on
+
+# pool:
+#   vmImage: 'ubuntu-latest'  # Use hosted Ubuntu agent
+
+# variables:
+#   buildConfiguration: 'Release'
+
+# steps:
+# - task: DotNetCoreCLI@2
+#   inputs:
+#     command: 'publish'
+#     publishWebProjects: false
+#     projects: '**/*.csproj'
+#     modifyOutputPath: false
+#     zipAfterPublish: true
+
+# - task: AzureRmWebAppDeployment@4
+#   inputs:
+#     ConnectionType: 'AzureRM'
+#     azureSubscription: 'StringEncryptorServiceConnection'
+#     appType: 'webAppLinux'
+#     WebAppName: 'StringEncryptor'
+#     packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+
+# trigger:
+# - master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'restore'
+    projects: 'Bouncer.sln'
+    feedsToUse: 'select'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: 'Bouncer.sln'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'publish'
+    publishWebProjects: true
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: true
+    modifyOutputPath: false
+  
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'

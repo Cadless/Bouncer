@@ -40,7 +40,7 @@ The following steps outline how Bouncer works at the high level using the Bounce
         - Id (unique/auto-assigned)
         - Columns: Name (unique)
 
-    - BundleFeatures - Many-to-many relationship table.
+    - BundleFeature - Many-to-many relationship table.
 
         - Id (unique/auto-assigned)
         - Columns: ApplicationId, FeatureId
@@ -53,8 +53,9 @@ The following steps outline how Bouncer works at the high level using the Bounce
         - Assignee (required in request body)
         - Expiration - Date (or null if license never expires)
         - Features - Array of licensed features.
+        - Status - Status enumeration value (0 = Disabled, 1 = Enabled)
 
-    - LicenseFeatures - Many-two-many relationship table.
+    - LicenseFeature - Many-two-many relationship table.
 
         - Id (unique/auto-assigned)
         - Columns: LicenseId, FeatureId
@@ -63,6 +64,11 @@ The following steps outline how Bouncer works at the high level using the Bounce
 
         - Id (unique/auto-assigned)
         - ExternalId (unique/required) - Externally defined string used to identify the unique license principal/assignee.
+
+    - PrincipalLicense - One-to-many relationship table
+
+        - Id (unique/auto-assigned)
+        - Columns: PrincipalId, LicenseId
 
 The client (shared) key is returned response body.
 
@@ -73,3 +79,39 @@ Bouncer consists of two primary components.
 - Bouncer.App.csproj - Currently, only functional/permitted for administrator type users to define and assign licenses to principals.
 
 - Bouncer.Api.csproj - Public facing JSON web API for validating licenses.
+
+    - Admin-Only Methods
+
+        - Principal
+
+            - Create
+            - Read
+            - Update
+            - Delete
+
+        - Feature
+        
+            - Create
+            - Read
+            - Update
+            - Delete
+
+        - Bundle
+        
+            - Create
+            - Read
+            - Update
+            - Delete
+
+        - License
+        
+            - Create
+            - Read
+            - Update
+            - Delete
+
+    - Non-Admin Methods
+
+        - LicenseValidation (POST) - Performs license validation.
+
+            - Requires principal ExternalId and license ClientKey

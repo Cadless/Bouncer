@@ -37,6 +37,14 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+
+# Install .NET 9 SDK
+- task: UseDotNet@2
+  displayName: 'Install .NET 9 SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '9.0.x'
+  
 - task: DotNetCoreCLI@2
   inputs:
     command: 'restore'

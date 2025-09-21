@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bouncer.Api", "Bouncer.Api\Bouncer.Api.csproj", "{8778BDA3-787B-49A0-88FD-D83534B528A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bouncer.Api", "bouncer-api\Bouncer.Api.csproj", "{8778BDA3-787B-49A0-88FD-D83534B528A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

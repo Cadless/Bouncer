@@ -11,56 +11,65 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
-- job: BuildAndDeployAPI
-  displayName: 'Build and Deploy .NET API'
-  steps:
-  # Install .NET 9 SDK
-  - task: UseDotNet@2
-    displayName: 'Install .NET 9 SDK'
-    inputs:
-      packageType: 'sdk'
-      version: '9.0.x'
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Restore API packages'
-    inputs:
-      command: 'restore'
-      projects: 'Bouncer.sln'
-      feedsToUse: 'select'
+#######################################################
+#                     Web API Job                     #
+#######################################################
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Build API'
-    inputs:
-      command: 'build'
-      projects: 'Bouncer.sln'
-      arguments: '--configuration $(buildConfiguration)'
+# - job: BuildAndDeployAPI
+#   displayName: 'Build and Deploy .NET API'
+#   steps:
+#   # Install .NET 9 SDK
+#   - task: UseDotNet@2
+#     displayName: 'Install .NET 9 SDK'
+#     inputs:
+#       packageType: 'sdk'
+#       version: '9.0.x'
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Publish API'
-    inputs:
-      command: 'publish'
-      publishWebProjects: true
-      arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api'
-      zipAfterPublish: true
-      modifyOutputPath: false
+#   - task: DotNetCoreCLI@2
+#     displayName: 'Restore API packages'
+#     inputs:
+#       command: 'restore'
+#       projects: 'Bouncer.sln'
+#       feedsToUse: 'select'
 
-  - task: PublishBuildArtifacts@1
-    displayName: 'Publish API artifacts'
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)/api'
-      ArtifactName: 'api-drop'
-      publishLocation: 'Container'
+#   - task: DotNetCoreCLI@2
+#     displayName: 'Build API'
+#     inputs:
+#       command: 'build'
+#       projects: 'Bouncer.sln'
+#       arguments: '--configuration $(buildConfiguration)'
 
-  - task: AzureRmWebAppDeployment@5
-    displayName: 'Deploy API to Azure'
-    inputs:
-      ConnectionType: 'AzureRM'
-      azureSubscription: 'PayAsYouGoSub1(9298f3c5-6a8b-47e2-90bc-21c26ceee690)'
-      appType: 'webAppLinux'
-      WebAppName: 'bouncer'
-      packageForLinux: '$(Build.ArtifactStagingDirectory)/api/**/*.zip'
-      RuntimeStack: 'DOTNETCORE|9.0'
-      DeploymentTypeLinux: 'oneDeploy'
+#   - task: DotNetCoreCLI@2
+#     displayName: 'Publish API'
+#     inputs:
+#       command: 'publish'
+#       publishWebProjects: true
+#       arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api'
+#       zipAfterPublish: true
+#       modifyOutputPath: false
+
+#   - task: PublishBuildArtifacts@1
+#     displayName: 'Publish API artifacts'
+#     inputs:
+#       PathtoPublish: '$(Build.ArtifactStagingDirectory)/api'
+#       ArtifactName: 'api-drop'
+#       publishLocation: 'Container'
+
+#   - task: AzureRmWebAppDeployment@5
+#     displayName: 'Deploy API to Azure'
+#     inputs:
+#       ConnectionType: 'AzureRM'
+#       azureSubscription: 'PayAsYouGoSub1(9298f3c5-6a8b-47e2-90bc-21c26ceee690)'
+#       appType: 'webAppLinux'
+#       WebAppName: 'bouncer'
+#       packageForLinux: '$(Build.ArtifactStagingDirectory)/api/**/*.zip'
+#       RuntimeStack: 'DOTNETCORE|9.0'
+#       DeploymentTypeLinux: 'oneDeploy'
+
+#######################################################
+#                Frontend Pipeline Job                #
+#######################################################
 
 - job: BuildAndDeployFrontend
   displayName: 'Build and Deploy SvelteKit Frontend'
@@ -73,12 +82,14 @@ jobs:
 
   # Install dependencies, including Vite
   - script: |
+      cd bouncer-app
       npm ci  # Installs dependencies from package-lock.json
       npx vite --version  # Verify Vite is installed (optional)
     displayName: 'Install dependencies'
 
-  # Build the SvelteKit app (generates output in .svelte/)
+  # Build the SvelteKit app (generates output in bouncer-app/build/)
   - script: |
+      cd bouncer-app
       export API_BASE_URL=$(API_BASE_URL)
       echo "API_BASE_URL: $(API_BASE_URL)"
       npm run build
@@ -90,7 +101,7 @@ jobs:
   - task: ArchiveFiles@2
     displayName: 'Archive the build output'
     inputs:
-      rootFolderOrFile: 'build'
+      rootFolderOrFile: 'bouncer-app/build'
       includeRootFolder: false
       archiveType: 'zip'
       archiveFile: '$(Build.ArtifactStagingDirectory)/output.zip'

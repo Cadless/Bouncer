@@ -10,46 +10,99 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-steps:
+jobs:
+- job: BuildAndDeployAPI
+  displayName: 'Build and Deploy .NET API'
+  steps:
+  # Install .NET 9 SDK
+  - task: UseDotNet@2
+    displayName: 'Install .NET 9 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '9.0.x'
 
-# Install .NET 9 SDK
-- task: UseDotNet@2
-  displayName: 'Install .NET 9 SDK'
-  inputs:
-    packageType: 'sdk'
-    version: '9.0.x'
-  
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'restore'
-    projects: 'Bouncer.sln'
-    feedsToUse: 'select'
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore API packages'
+    inputs:
+      command: 'restore'
+      projects: 'Bouncer.sln'
+      feedsToUse: 'select'
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: 'Bouncer.sln'
+  - task: DotNetCoreCLI@2
+    displayName: 'Build API'
+    inputs:
+      command: 'build'
+      projects: 'Bouncer.sln'
+      arguments: '--configuration $(buildConfiguration)'
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'publish'
-    publishWebProjects: true
-    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: true
-    modifyOutputPath: false
-  
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
+  - task: DotNetCoreCLI@2
+    displayName: 'Publish API'
+    inputs:
+      command: 'publish'
+      publishWebProjects: true
+      arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api'
+      zipAfterPublish: true
+      modifyOutputPath: false
 
-- task: AzureRmWebAppDeployment@5
-  inputs:
-    ConnectionType: 'AzureRM'
-    azureSubscription: 'PayAsYouGoSub1(9298f3c5-6a8b-47e2-90bc-21c26ceee690)'
-    appType: 'webAppLinux'
-    WebAppName: 'bouncer'
-    packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
-    RuntimeStack: 'DOTNETCORE|9.0'
-    DeploymentTypeLinux: 'oneDeploy'
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish API artifacts'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/api'
+      ArtifactName: 'api-drop'
+      publishLocation: 'Container'
+
+  - task: AzureRmWebAppDeployment@5
+    displayName: 'Deploy API to Azure'
+    inputs:
+      ConnectionType: 'AzureRM'
+      azureSubscription: 'PayAsYouGoSub1(9298f3c5-6a8b-47e2-90bc-21c26ceee690)'
+      appType: 'webAppLinux'
+      WebAppName: 'bouncer'
+      packageForLinux: '$(Build.ArtifactStagingDirectory)/api/**/*.zip'
+      RuntimeStack: 'DOTNETCORE|9.0'
+      DeploymentTypeLinux: 'oneDeploy'
+
+- job: BuildAndDeployFrontend
+  displayName: 'Build and Deploy SvelteKit Frontend'
+  steps:
+
+  - task: NodeTool@0
+    displayName: 'Install Node.js'
+    inputs:
+      versionSpec: '20.x'  # Ensure you're using Node.js 16 or later
+
+  # Install dependencies, including Vite
+  - script: |
+      npm ci  # Installs dependencies from package-lock.json
+      npx vite --version  # Verify Vite is installed (optional)
+    displayName: 'Install dependencies'
+
+  # Build the SvelteKit app (generates output in .svelte/)
+  - script: |
+      export API_BASE_URL=$(API_URL)
+      echo "API URL: $(API_BASE_URL)"
+      npm run build
+    displayName: 'Build the SvelteKit app'
+    env:
+      API_BASE_URL: $(API_BASE_URL)
+
+  # Archive the build folder (both client and server files)
+  - task: ArchiveFiles@2
+    displayName: 'Archive the build output'
+    inputs:
+      rootFolderOrFile: 'build'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/output.zip'
+      replaceExistingArchive: true
+
+  - task: AzureRmWebAppDeployment@4
+    displayName: 'Deploy to Azure App Service'
+    inputs:
+      ConnectionType: 'AzureRM'
+      azureSubscription: 'bouncer-app'
+      appType: 'webAppLinux'
+      WebAppName: 'bouncer-app'
+      ResourceGroupName: 'bouncer-app_group'
+      packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
+      StartupCommand: 'node /home/site/wwwroot/'
